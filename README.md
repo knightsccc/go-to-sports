@@ -1,5 +1,17 @@
 # mimotion
 
+## 本 Fork 的运行设置（以此为准）
+
+- GitHub Actions 默认每天 **北京时间 21:30** 触发（UTC cron 为 `30 13 * * *`）。GitHub 定时任务可能延迟或跳过。
+- 每次从 **6000～9000 步（包含两端）** 中随机选取设定值，不再根据当天时间折算。这里只是向第三方服务提交设定步数，并非真实运动记录；接口成功也不保证微信运动同步。
+- 在仓库 **Settings → Secrets and variables → Actions → Variables** 设置 `MIN_STEP` 和 `MAX_STEP`，即可调整随机范围，无需修改 Python 源码。未设置时默认 `6000` 和 `9000`；两者应为非负整数，且最小值不得大于最大值。
+- Zepp Life 登录账号、密码分别保存为 **Repository secrets**：`USER`、`PWD`；可选的 `AES_KEY`（16 字节 ASCII）用于加密 Actions 登录缓存。无需 `PAT` 或 `CONFIG`，也不配置任何通知推送。
+- `刷步数` 工作流暂时保持 GitHub 侧 **禁用**，且必须先由操作者明确授权后设置仓库变量 `RUN_APPROVED=true` 才允许运行。未确认之前不要启用或手动执行。
+- 下面保留的是上游仓库原版文档，其中关于 `PAT`、`CONFIG`、Random Cron 和 22:00 前步数折算的说明不适用于此 Fork。
+
+---
+
+
 ![ 刷步数](https://github.com/TonyJiangWJ/mimotion/actions/workflows/run.yml/badge.svg)
 [![GitHub forks](https://img.shields.io/github/forks/TonyJiangWJ/mimotion?style=flat-square)](https://github.com/TonyJiangWJ/mimotion/forks)
 [![GitHub stars](https://img.shields.io/github/stars/TonyJiangWJ/mimotion?style=flat-square)](https://github.com/TonyJiangWJ/mimotion/stargazers)

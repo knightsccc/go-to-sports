@@ -27,16 +27,13 @@ def get_int_value_default(_config: dict, _key, default):
     return int(_config.get(_key))
 
 
-# 获取当前时间对应的最大和最小步数
-def get_min_max_by_time(hour=None, minute=None):
-    if hour is None:
-        hour = time_bj.hour
-    if minute is None:
-        minute = time_bj.minute
-    time_rate = min((hour * 60 + minute) / (22 * 60), 1)
-    min_step = get_int_value_default(config, 'MIN_STEP', 18000)
-    max_step = get_int_value_default(config, 'MAX_STEP', 25000)
-    return int(time_rate * min_step), int(time_rate * max_step)
+# 使用配置的步数范围，不因执行时间而按比例缩减。
+def get_step_range():
+    min_step = get_int_value_default(config, 'MIN_STEP', 6000)
+    max_step = get_int_value_default(config, 'MAX_STEP', 9000)
+    if min_step < 0 or max_step < min_step:
+        raise ValueError("步数范围无效：最小值必须为非负整数，且不能大于最大值")
+    return min_step, max_step
 
 
 # 虚拟ip地址
@@ -317,8 +314,8 @@ if __name__ == "__main__":
         config = {
             "USER": os.environ.get("USER"),
             "PWD": os.environ.get("PWD"),
-            "MIN_STEP": os.environ.get("MIN_STEP", "18000"),
-            "MAX_STEP": os.environ.get("MAX_STEP", "25000"),
+            "MIN_STEP": os.environ.get("MIN_STEP", "6000"),
+            "MAX_STEP": os.environ.get("MAX_STEP", "9000"),
             "PUSH_PLUS_TOKEN": os.environ.get("PUSH_PLUS_TOKEN", ""),
             "PUSH_PLUS_HOUR": os.environ.get("PUSH_PLUS_HOUR", ""),
             "PUSH_PLUS_MAX": os.environ.get("PUSH_PLUS_MAX", "30"),
@@ -357,7 +354,7 @@ if __name__ == "__main__":
     if users is None or passwords is None:
         print("未正确配置账号密码，无法执行")
         exit(1)
-    min_step, max_step = get_min_max_by_time()
+    min_step, max_step = get_step_range()
     use_concurrent = config.get('USE_CONCURRENT')
     if use_concurrent is not None and use_concurrent == 'True':
         use_concurrent = True
