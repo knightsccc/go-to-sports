@@ -327,6 +327,12 @@ if __name__ == "__main__":
         print("未配置CONFIG或USER/PWD环境变量，无法执行。请在本地创建.env文件或配置环境变量。")
         exit(1)
 
+    # Allow credentials in separate GitHub Secrets while CONFIG holds step settings.
+    if not config.get("USER"):
+        config["USER"] = os.environ.get("USER")
+    if not config.get("PWD"):
+        config["PWD"] = os.environ.get("PWD")
+
     # region 初始化参数
     # 创建推送配置对象
     push_config = push_util.PushConfig(
