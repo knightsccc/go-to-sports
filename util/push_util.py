@@ -117,8 +117,6 @@ def push_telegram_bot(bot_token, chat_id, content):
         "text": content,
         "parse_mode": "HTML"
     }
-    print(f"post to url: {requestUrl}")
-    print(f"payload: {json.dumps(payload)}")
     try:
         response = requests.post(requestUrl, json=payload)
         if response.status_code == 200:
@@ -126,13 +124,13 @@ def push_telegram_bot(bot_token, chat_id, content):
             if json_res.get('ok') is True:
                 print(f"telegram bot推送完毕：{json_res['result']['message_id']}")
             else:
-                print(f"telegram bot推送失败: {json.dumps(json_res)}")
+                print("telegram bot推送失败：API返回错误")
         else:
             print(f"telegram bot推送失败: {response.status_code}")
     except requests.exceptions.RequestException as e:
-        print(f"telegram bot推送异常: {e}")
+        print("telegram bot推送网络异常")
     except Exception as e:
-        print(f"telegram bot推送发生未知异常: {e}")
+        print("telegram bot推送发生未知异常")
 
 
 def push_results(exec_results, summary, config: PushConfig):
