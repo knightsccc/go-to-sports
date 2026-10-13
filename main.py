@@ -198,7 +198,10 @@ class MiMotionRunner:
             if bound_device_id:
                 user_token_info["bound_device_id"] = bound_device_id
                 user_tokens[self.user] = user_token_info
-                self.log_str += f"查找到已绑定设备ID: {bound_device_id}\n"
+                self.log_str += "检测到已绑定运动设备\n"
+
+        if not bound_device_id:
+            return "未找到已绑定的运动设备，停止提交", False
 
         ok, msg = zeppHelper.post_fake_brand_data(step, app_token, self.user_id, device_id=bound_device_id)
         return f"修改步数（{step}）[" + msg + "]", ok
@@ -216,11 +219,12 @@ def run_single_account(total, idx, user_mi, passwd_mi):
         log_str += f'{exec_msg}\n'
         exec_result = {"user": user_mi, "success": success,
                        "msg": exec_msg}
-    except:
-        log_str += f"执行异常:{traceback.format_exc()}\n"
-        log_str += traceback.format_exc()
+    except Exception as exc:
+        # Exception strings and tracebacks may embed sensitive request URLs or tokens.
+        reason = type(exc).__name__
+        log_str += f"执行异常（已隐藏请求详情）：{reason}\n"
         exec_result = {"user": user_mi, "success": False,
-                       "msg": f"执行异常:{traceback.format_exc()}"}
+                       "msg": f"执行异常：{reason}"}
     print(log_str)
     return exec_result
 
@@ -254,6 +258,8 @@ def execute():
         summary = f"\n执行账号总数{total}，成功：{success_count}，失败：{total - success_count}"
         print(summary)
         push_util.push_results(push_results, summary, push_config)
+        if success_count != total:
+            exit(1)
     else:
         print(f"账号数长度[{len(user_list)}]和密码数长度[{len(passwd_list)}]不匹配，跳过执行")
         exit(1)
@@ -306,7 +312,6 @@ if __name__ == "__main__":
             config = dict(json.loads(os.environ.get("CONFIG")))
         except:
             print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
-            traceback.print_exc()
             exit(1)
     elif "USER" in os.environ and "PWD" in os.environ:
         config = {

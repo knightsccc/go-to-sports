@@ -48,7 +48,7 @@ def login_access_token(user, password) -> (str | None, str | None):
         if code is None:
             return None, "获取accessToken失败 %s" % get_error_code(location)
     except:
-        return None, f"获取accessToken异常:{traceback.format_exc()}"
+        return None, "获取accessToken异常（详细信息已隐藏）"
     return code, None
 
 
@@ -138,7 +138,7 @@ def grant_login_tokens(access_token, device_id, is_phone=False) -> (str | None, 
         _app_token = resp["token_info"]["app_token"]
         _userid = resp["token_info"]["user_id"]
     except:
-        print("提取login_token失败：%s" % json.dumps(resp, ensure_ascii=False, indent=2))
+        return None, None, None, "提取login_token失败（已隐藏接口响应）"
     return _login_token, _app_token, _userid, None
 
 
@@ -263,8 +263,8 @@ def get_user_device_id(app_token, userid) -> str | None:
                     dev_id = item.get("deviceId") or item.get("mac")
                     if dev_id:
                         return str(dev_id).replace(":", "").upper()
-    except Exception as e:
-        print(f"查询设备列表异常: {e}")
+    except Exception:
+        print("查询设备列表异常（已隐藏请求详情）")
     return None
 
 

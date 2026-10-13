@@ -2,40 +2,53 @@ name: 刷步数
 
 on:
   schedule:
-    - cron: '28 10,12,14 * * *'
+    - cron: '15 14 * * *' # UTC; 22:15 Asia/Shanghai
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fixed-steps
+  cancel-in-progress: false
 
 jobs:
   build:
+    # Require explicit approval before ANY run can submit artificial steps.
+    if: vars.RUN_APPROVED == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
+    env:
+      HAS_AES_KEY: ${{ secrets.AES_KEY != '' }}
     steps:
-      - name: Checkout codes
-        uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }} #此处PAT需要申请，教程详见：README
-      - name: Update system and install zsh
-        run: |
-          sudo -E apt-get -qq update
-          sudo -E apt-get install zsh -y
-          
-      - name: 初始化Python
-        uses: actions/setup-python@v6
+          persist-credentials: false
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
-          
-      - name: 开始
+          python-version: '3.10'
+      - name: Restore encrypted login cache
+        if: env.HAS_AES_KEY == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: encrypted_tokens.data
+          key: zepp-token-cache-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            zepp-token-cache-
+      - name: Submit configured steps
         env:
-            CONFIG: ${{ secrets.CONFIG }}
-            AES_KEY: ${{ secrets.AES_KEY }}
+          CONFIG: '{"MIN_STEP":"8000","MAX_STEP":"8000"}'
+          USER: ${{ secrets.USER }}
+          PWD: ${{ secrets.PWD }}
+          AES_KEY: ${{ secrets.AES_KEY }}
         run: |
-          pip3 install -r requirements.txt
-          python3 main.py
-
-      - name: persist tokens
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@users.noreply.github.com
-          git add .
-          git commit -m "persist tokens trigger by ${{ github.event_name }}"
-          git push origin master
+          pip install -r requirements.txt
+          python main.py
+      - name: Save encrypted login cache
+        if: success() && env.HAS_AES_KEY == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: encrypted_tokens.data
+          key: zepp-token-cache-${{ github.run_id }}-${{ github.run_attempt }}
