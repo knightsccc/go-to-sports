@@ -2,7 +2,9 @@
 
 ## 本 Fork 的运行设置（以此为准）
 
-- GitHub Actions 默认每天 **北京时间 21:30** 触发（UTC cron 为 `30 13 * * *`）。GitHub 定时任务可能延迟或跳过。
+- 甲骨文 VPS 的 `go-to-sports-dispatch.timer` 每天 **北京时间 21:30** 通过 GitHub CLI 触发工作流；GitHub `schedule` 已移除，避免严重延迟及重复提交。工作流可能排队，仍不保证精确启动。
+- 部署在 VPS 上的 `ops/go-to-sports-dispatch.service`、`ops/go-to-sports-dispatch.timer` 与 `ops/dispatch-daily.sh` 负责调度，日常提交步数仍由 GitHub Actions 执行，Zepp 登录凭据仅存在 GitHub Secrets 中。
+- 定时触发附带北京时间日期校验；只有当日 **21:30～22:29** 的 GitHub 运行才允许实际提交，跨日或严重延迟则失败并停止。手动测试可以指定仅本次有效的 `min_step`、`max_step` 输入，省略 `scheduled_date`。
 - 每次从 **6000～9000 步（包含两端）** 中随机选取设定值，不再根据当天时间折算。这里只是向第三方服务提交设定步数，并非真实运动记录；接口成功也不保证微信运动同步。
 - 在仓库 **Settings → Secrets and variables → Actions → Variables** 设置 `MIN_STEP` 和 `MAX_STEP`，即可调整随机范围，无需修改 Python 源码。未设置时默认 `6000` 和 `9000`；两者应为非负整数，且最小值不得大于最大值。
 - Zepp Life 登录账号、密码分别保存为 **Repository secrets**：`USER`、`PWD`；可选的 `AES_KEY`（16 字节 ASCII）用于加密 Actions 登录缓存。无需 `PAT` 或 `CONFIG`，也不配置任何通知推送。

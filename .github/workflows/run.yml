@@ -1,9 +1,22 @@
 name: 刷步数
 
+# All scheduled dispatches come from the Oracle VPS systemd timer.
+# Keeping GitHub's own schedule disabled avoids late/duplicate submissions.
 on:
-  schedule:
-    - cron: '30 13 * * *' # UTC; 21:30 Asia/Shanghai
   workflow_dispatch:
+    inputs:
+      min_step:
+        description: Minimum steps for this run (optional)
+        required: false
+        type: string
+      max_step:
+        description: Maximum steps for this run (optional)
+        required: false
+        type: string
+      scheduled_date:
+        description: Beijing date (YYYY-MM-DD); only the VPS timer supplies this
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -21,6 +34,19 @@ jobs:
     env:
       HAS_AES_KEY: ${{ secrets.AES_KEY != '' }}
     steps:
+      - name: Reject late or wrong-day scheduled dispatches
+        if: ${{ inputs.scheduled_date != '' }}
+        env:
+          EXPECTED_DATE: ${{ inputs.scheduled_date }}
+        shell: bash
+        run: |
+          today="$(TZ=Asia/Shanghai date +%F)"
+          now_hm="$(TZ=Asia/Shanghai date +%H%M)"
+          # Manual tests omit scheduled_date; daily submissions are allowed 21:30-22:29.
+          if [[ "$today" != "$EXPECTED_DATE" || "$now_hm" -lt 2130 || "$now_hm" -gt 2229 ]]; then
+            echo "::error::Scheduled dispatch was late or on a different Beijing date; skipping step submission."
+            exit 1
+          fi
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -41,8 +67,8 @@ jobs:
         env:
           USER: ${{ secrets.USER }}
           PWD: ${{ secrets.PWD }}
-          MIN_STEP: ${{ vars.MIN_STEP || '6000' }}
-          MAX_STEP: ${{ vars.MAX_STEP || '9000' }}
+          MIN_STEP: ${{ inputs.min_step || vars.MIN_STEP || '6000' }}
+          MAX_STEP: ${{ inputs.max_step || vars.MAX_STEP || '9000' }}
           AES_KEY: ${{ secrets.AES_KEY }}
         run: |
           pip install -r requirements.txt

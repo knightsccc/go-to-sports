@@ -1,0 +1,18 @@
+[Unit]
+Description=Dispatch go-to-sports GitHub Actions via Oracle VPS
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/chworks/go-to-sports
+Environment=HOME=/home/ubuntu
+Environment=GH_PROMPT_DISABLED=1
+ExecStart=/bin/sh /home/ubuntu/chworks/go-to-sports/ops/dispatch-daily.sh
+TimeoutStartSec=90
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
