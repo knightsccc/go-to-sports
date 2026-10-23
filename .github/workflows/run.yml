@@ -28,7 +28,7 @@ concurrency:
 jobs:
   build:
     # Require explicit approval before ANY run can submit artificial steps.
-    if: vars.RUN_APPROVED == 'true'
+    if: ${{ false }} # Paused 2026-10-23; do not run steps even when VPS dispatches.
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
